@@ -14,10 +14,20 @@ node {
 
 	// PREP STAGE
 	stage('PREPARE WORKSPACE') { 
-		// clean the workspace
+		// clean the job workspace
 		deleteDir()
-		// Get the Maven tool.      
+
+		// Get the Maven build tool
 		mvnHome = tool 'M3'
+
+		// copy _ss_environment config file into project folder
+		configFileProvider([configFile(fileId: '_ss_environment.php', variable: 'ENV')]) {
+			bat "copy /y ${ENV} ${PROJECT_DIR}\\_ss_environment.php"
+		}
+
+		bat '''
+			"C:\\Program Files\\Git\\bin\\bash.exe" -c "printf \033[31mRed\033[0m"
+			'''
 	}
 
 	// CHECKOUT STAGE
@@ -46,7 +56,21 @@ node {
 		echo 'BUILDING/REBUILDING mysql database'
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			bat "${GIT_BASH} -c framework/sake dev/build '' flush=all"
+			bat '''
+				"C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/build '' flush=all"
+				'''
+		}
+	}
+
+	// TEST STAGE
+	stage('RUN PHPUnit Tests'){
+		// running phpunit tests
+		echo 'RUNNING PHPUnit tests'
+		// move into project folder
+		dir("${PROJECT_DIR}"){
+			bat '''
+				"C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/tests '' flush=all"
+				'''
 		}
 	}
 
