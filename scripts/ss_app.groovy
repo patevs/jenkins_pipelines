@@ -64,9 +64,7 @@ node {
 		echoGreen("RUNNING PHPUnit tests")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			bat '''
-				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/tests/all '' flush=all"
-				'''
+			//
 		}
 	}
 
