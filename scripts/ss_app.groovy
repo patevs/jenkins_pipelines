@@ -3,8 +3,8 @@
 node {
 
 	// BUILD JOB DETAILS
-	echo "Starting build job: ${JOB_NAME} on git branch: ${BRANCH}"
-	echo "Build number: ${BUILD_NUMBER}"
+	echoGreen("Starting build job: ${JOB_NAME} on git branch: ${BRANCH}")
+	echoGreen("Build number: ${BUILD_NUMBER}")
 
 	// BUILD VARIABLES
 	def PROJECT_DIR = "C:\\xampp-5\\htdocs"
@@ -24,16 +24,12 @@ node {
 		configFileProvider([configFile(fileId: '_ss_environment.php', variable: 'ENV')]) {
 			bat "copy /y ${ENV} ${PROJECT_DIR}\\_ss_environment.php"
 		}
-
-		bat '''
-			"C:\\Program Files\\Git\\bin\\bash.exe" -c "printf \033[31mRed\033[0m"
-			'''
 	}
 
 	// CHECKOUT STAGE
 	stage('CHECKOUT SCM'){
-		// get source code from git
-		echo 'CHECKING-OUT source code from git'
+		// checkout source code from git
+		echoGreen("CHECKING-OUT source code from git")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			git branch: "${BRANCH}", url: 'https://github.com/patevs/ss_app.git'
@@ -43,7 +39,7 @@ node {
 	// INSTALL STAGE
 	stage('INSTALL Composer Dependencies'){
 		// install composer dependencies
-		echo 'INSTALLING composer dependencies'
+		echoGreen("INSTALLING composer dependencies")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			bat 'composer install --prefer-source'
@@ -53,7 +49,7 @@ node {
 	// BUILD STAGE
 	stage('BUILD/REBUILD Database'){
 		// build/rebuild mysql database
-		echo 'BUILDING/REBUILDING mysql database'
+		echoGreen("BUILDING/REBUILDING mysql database")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			bat '''
@@ -65,15 +61,22 @@ node {
 	// TEST STAGE
 	stage('RUN PHPUnit Tests'){
 		// running phpunit tests
-		echo 'RUNNING PHPUnit tests'
+		echoGreen("RUNNING PHPUnit tests")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			bat '''
-				"C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/tests '' flush=all"
+				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/tests/all '' flush=all"
 				'''
 		}
 	}
 
 } // END OF PIPELINE
+
+// output green text
+def echoGreen(text){
+	ansiColor('xterm') {
+		echo "\033[32m${text}\033[0m"
+	}
+}
 
 // EOF
