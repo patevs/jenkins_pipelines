@@ -55,7 +55,7 @@ node {
 		echoGreen("Checking for outdated composer dependencies")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			bat "vendor\\bin\\dependensees > nul 2>&1 >> ${REPORTS_DIR}\\dependensees-report.txt"
+			bat "vendor\\bin\\dependensees >> ${REPORTS_DIR}\\dependensees-report.txt"
 			// composer show -i (short for --installed) or composer [global] show -i -t short for --tree
 		}
 	}
@@ -91,9 +91,13 @@ node {
 				'''
 			bat '''
 				:: vendor/bin/fastest --help
-				("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\pphpunit-reports\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\phpunit-reports\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}"
 				'''
+			bat """
+				("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				"""
 		}
 	}
 
@@ -103,7 +107,7 @@ node {
 		echoGreen("ARCHIVING build reports")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'report.html', reportName: 'PHPUnit Report', reportTitles: ''])
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
 			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/dependensees/', reportFiles: 'index.html', reportName: 'Dependencies Report', reportTitles: ''])
 		}
 		// move into reports folder
