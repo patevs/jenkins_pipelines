@@ -67,7 +67,7 @@ node {
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			bat '''
-				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/build '' flush=all"
+				"C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/build '' flush=all"
 				'''
 		}
 	}
@@ -80,23 +80,14 @@ node {
 		dir("${PROJECT_DIR}"){
 			// run php unit tests
 			bat '''
-				:: vendor/bin/phpunit "" siteconfig/tests "" db=mysql flush=all
-				'''
-			bat '''
-				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/tests/all '' flush=all"
-				'''
-			bat '''
 				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "find **/tests/ -name '*Test.php'"
 				"C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/"
 				'''
 			bat '''
-				:: vendor/bin/fastest --help
-				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest "vendor\\bin\\phpunit --testdox-html assets\\phpunit-reports\\report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				:: vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}"
+				vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}"
 				'''
 			bat """
-				("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
 				"""
 		}
 	}
