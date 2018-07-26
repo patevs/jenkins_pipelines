@@ -62,8 +62,18 @@ node {
 				'''
 			bat """
 				:: (vendor\\bin\\fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d reports/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
 				"""
+		}
+	}
+
+	// QA STAGE
+	stage('RUN QA Tools'){
+		echoGreen("RUNNING QA Tools")
+		// move into project folder
+		dir("${PROJECT_DIR}"){
+			// run php unit tests
+			bat "phpqa --analyzeDirs mysite --buildDir ${REPORTS_DIR}\\qa-reports --report -n -vvv"
 		}
 	}
 
@@ -73,13 +83,11 @@ node {
 		echoGreen("ARCHIVING build reports")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
-			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/dependensees/', reportFiles: 'index.html', reportName: 'Dependencies Report', reportTitles: ''])
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
 		}
 		// move into reports folder
 		dir("${REPORTS_DIR}"){
-			//archiveArtifacts '**'
-			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '', reportFiles: 'dependensees-report.txt', reportName: 'Dependencies Summary', reportTitles: ''])
+			archiveArtifacts '**'
 		}
 	}
 
