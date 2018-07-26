@@ -11,7 +11,7 @@ node {
 	def REPORTS_DIR = "${WORKSPACE}\\test-reports"
 
 	// Maven build tool
-	def mvnHome
+	//def mvnHome
 
 	// PREP STAGE
 	stage('PREPARE WORKSPACE') { 
@@ -21,7 +21,7 @@ node {
 		bat "mkdir ${REPORTS_DIR}"
 
 		// Get the Maven build tool
-		mvnHome = tool 'M3'
+		//mvnHome = tool 'M3'
 
 		// copy _ss_environment config file into project folder
 		configFileProvider([configFile(fileId: '_ss_environment.php', variable: 'ENV')]) {
@@ -84,10 +84,11 @@ node {
 				"C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/"
 				'''
 			bat '''
-				vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}"
+				:: (vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}") || (exit 0)
 				'''
 			bat """
-				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d siteconfig/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				(vendor\\bin\\fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
 				"""
 		}
 	}
@@ -98,7 +99,7 @@ node {
 		echoGreen("ARCHIVING build reports")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
 			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/dependensees/', reportFiles: 'index.html', reportName: 'Dependencies Report', reportTitles: ''])
 		}
 		// move into reports folder
