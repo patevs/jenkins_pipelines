@@ -41,9 +41,11 @@ node {
 		echoGreen("BUILDING/REBUILDING MySQL Database")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			bat '''
-				"C:\\Program Files\\Git\\bin\\bash.exe" -c "framework/sake dev/build '' flush=all"
-				'''
+			withEnv(['GIT_BASH="C:\\Program Files\\Git\\bin\\bash.exe"']) {
+				bat '''
+					%GIT_BASH% -c "framework/sake dev/build '' flush=all"
+					'''
+			}
 		}
 	}
 
@@ -54,16 +56,12 @@ node {
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			// run php unit tests
-			bat '''
-				"C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/"
-				'''
-			bat '''
-				:: (vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}") || (exit 0)
-				'''
-			bat """
-				:: (vendor\\bin\\fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d reports/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
-				"""
+			withEnv(['GIT_BASH="C:\\Program Files\\Git\\bin\\bash.exe"']) {
+				bat '''
+					%GIT_BASH% -c "ls -d **/tests/"
+					'''
+			}
+			bat 'fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit {}" || (exit 0)'
 		}
 	}
 
@@ -72,8 +70,10 @@ node {
 		echoGreen("RUNNING QA Tools")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
+			bat 'phpqa tools'
 			// run php unit tests
-			bat "phpqa --analyzeDirs mysite --buildDir ${REPORTS_DIR}\\qa-reports --report -n -vvv"
+			//--analyzedDirs mysite
+			bat "phpqa --ignoredDirs cms,framework,vendor --buildDir ${REPORTS_DIR}\\qa-reports --report -n -v"
 		}
 	}
 
@@ -83,11 +83,13 @@ node {
 		echoGreen("ARCHIVING build reports")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
+		    junit 'assets/*.xml'
 			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
 		}
 		// move into reports folder
 		dir("${REPORTS_DIR}"){
 			archiveArtifacts '**'
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '**', reportFiles: '*.html', reportName: 'PHPUnit Report', reportTitles: ''])
 		}
 	}
 
@@ -157,12 +159,12 @@ def echoBoldGreen(text){
 // output blue
 def echoBlue(text){
 	ansiColor('xterm') {
-		echo "\033[34m${text}\033[0m"
+		echo "\033[36m${text}\033[0m"
 	}
 }
 def echoBoldBlue(text){
 	ansiColor('xterm') {
-		echo "\033[1;34m${text}\033[1m"
+		echo "\033[1;36m${text}\033[1m"
 	}
 }
 
