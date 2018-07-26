@@ -56,12 +56,12 @@ node {
 		// move into project folder
 		dir("${PROJECT_DIR}"){
 			// run php unit tests
-			withEnv(['GIT_BASH="C:\\Program Files\\Git\\bin\\bash.exe"']) {
+			withEnv(['GIT_BASH="C:\\Program Files\\Git\\bin\\bash.exe"',"REPORTS_DIR=${REPORTS_DIR}\\phpunit-report"]) {
 				bat '''
-					%GIT_BASH% -c "ls -d **/tests/"
+					%GIT_BASH% -c "ls -d siteconfig/tests/" | fastest -vvv -n "vendor\\bin\\phpunit --testdox-html %REPORTS_DIR%\\phpunit-report.html --log-junit %REPORTS_DIR%\\phpunit-report.xml {}" || (exit 0) 
 					'''
 			}
-			bat 'fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit {}" || (exit 0)'
+			//bat 'fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit {}" || (exit 0)'
 		}
 	}
 
@@ -73,7 +73,7 @@ node {
 			bat 'phpqa tools'
 			// run php unit tests
 			//--analyzedDirs mysite
-			bat "phpqa --ignoredDirs cms,framework,vendor --buildDir ${REPORTS_DIR}\\qa-reports --report -n -v"
+			bat "phpqa --ignoredDirs cms,framework,reports,siteconfig,themes,vendor --tools phpmetrics --buildDir ${REPORTS_DIR}\\qa-reports --report offline -n -v"
 		}
 	}
 
@@ -81,15 +81,13 @@ node {
 	stage('ARCHIVE & PUBLISH Build Reports'){
 		// archiving build reports
 		echoGreen("ARCHIVING build reports")
-		// move into project folder
-		dir("${PROJECT_DIR}"){
-		    junit 'assets/*.xml'
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
-		}
 		// move into reports folder
 		dir("${REPORTS_DIR}"){
 			archiveArtifacts '**'
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '**', reportFiles: '*.html', reportName: 'PHPUnit Report', reportTitles: ''])
+			junit 'phpunit-report/*.xml'
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'qa-reports', reportFiles: 'phpqa.html', reportName: 'QA Report', reportTitles: ''])
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'qa-reports/phpmetrics', reportFiles: '**.html', reportName: 'phpmetrics Report', reportTitles: ''])
+			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'phpunit-report', reportFiles: '*.html', reportName: 'PHPUnit Report', reportTitles: ''])
 		}
 	}
 
