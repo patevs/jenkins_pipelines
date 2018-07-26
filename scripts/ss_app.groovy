@@ -3,60 +3,35 @@
 node {
 
 	// BUILD JOB DETAILS
-	echoGreen("Starting build job: ${JOB_NAME} on git branch: ${BRANCH}")
-	echoGreen("Build number: ${BUILD_NUMBER}")
+	echoBoldBlue("Starting build job: ${JOB_NAME} on git branch: ${BRANCH}")
+	echoBoldBlue("Build number: ${BUILD_NUMBER}")
 
 	// BUILD FOLDERS
 	def PROJECT_DIR = "C:\\xampp-5\\htdocs"
 	def REPORTS_DIR = "${WORKSPACE}\\test-reports"
 
-	// Maven build tool
-	//def mvnHome
-
 	// PREP STAGE
 	stage('PREPARE WORKSPACE') { 
-		// clean the job workspace
-		deleteDir()
-		// ensure the reports folder exists
-		bat "mkdir ${REPORTS_DIR}"
-
-		// Get the Maven build tool
-		//mvnHome = tool 'M3'
-
-		// copy _ss_environment config file into project folder
-		configFileProvider([configFile(fileId: '_ss_environment.php', variable: 'ENV')]) {
-			bat "copy /y ${ENV} ${PROJECT_DIR}\\_ss_environment.php"
-		}
+		prepWS("${PROJECT_DIR}", "${REPORTS_DIR}")
 	}
 
 	// CHECKOUT STAGE
 	stage('CHECKOUT SCM'){
-		// checkout source code from git
-		echoGreen("CHECKING-OUT source code from git")
-		// move into project folder
-		dir("${PROJECT_DIR}"){
-			git branch: "${BRANCH}", url: 'https://github.com/patevs/ss_app.git'
-		}
+		checkoutSCM("${PROJECT_DIR}", "${BRANCH}")
 	}
 
 	// INSTALL STAGE
 	stage('INSTALL Composer Dependencies'){
-		// install composer dependencies
-		echoGreen("INSTALLING composer dependencies")
-		// move into project folder
-		dir("${PROJECT_DIR}"){
-			bat 'composer install --prefer-source'
-		}
+		installDependencies("${PROJECT_DIR}")
 	}
 
 	// DEPENDENCY CHECK STAGE
-	stage('CHECK Dependency Version'){
+	stage('SHOW Outdated Dependencies'){
 		// check for outdated composer dependencies
-		echoGreen("Checking for outdated composer dependencies")
+		echoGreen("SHOWING outdated composer dependencies")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			bat "vendor\\bin\\dependensees >> ${REPORTS_DIR}\\dependensees-report.txt"
-			// composer show -i (short for --installed) or composer [global] show -i -t short for --tree
+			bat "composer show -o"
 		}
 	}
 
@@ -80,14 +55,13 @@ node {
 		dir("${PROJECT_DIR}"){
 			// run php unit tests
 			bat '''
-				:: "C:\\Program Files\\Git\\bin\\bash.exe" -c "find **/tests/ -name '*Test.php'"
 				"C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/"
 				'''
 			bat '''
 				:: (vendor\\bin\\fastest -x phpunit.xml -vvv --no-ansi -n "vendor\\bin\\phpunit {}") || (exit 0)
 				'''
 			bat """
-				(vendor\\bin\\fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit \"\" {} \"\" db=mysql flush=all") || (exit 0)
+				:: (vendor\\bin\\fastest -x phpunit.xml -vvv -n "vendor\\bin\\phpunit \"\" {} \"\" db=mysql flush=all") || (exit 0)
 				:: ("C:\\Program Files\\Git\\bin\\bash.exe" -c "ls -d **/tests/" | vendor\\bin\\fastest -v -n "vendor\\bin\\phpunit --testdox-html assets\\phpunit-report\\phpunit-report.html \"\" {} \"\" db=mysql flush=all") || (exit 0)
 				"""
 		}
@@ -99,22 +73,88 @@ node {
 		echoGreen("ARCHIVING build reports")
 		// move into project folder
 		dir("${PROJECT_DIR}"){
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/dependensees/', reportFiles: 'index.html', reportName: 'Dependencies Report', reportTitles: ''])
+			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'assets/phpunit-report', reportFiles: 'phpunit-report.html', reportName: 'PHPUnit Report', reportTitles: ''])
+			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'build/dependensees/', reportFiles: 'index.html', reportName: 'Dependencies Report', reportTitles: ''])
 		}
 		// move into reports folder
 		dir("${REPORTS_DIR}"){
-			archiveArtifacts '**'
-			publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '', reportFiles: 'dependensees-report.txt', reportName: 'Dependencies Summary', reportTitles: ''])
+			//archiveArtifacts '**'
+			//publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: '', reportFiles: 'dependensees-report.txt', reportName: 'Dependencies Summary', reportTitles: ''])
 		}
 	}
 
 } // END OF PIPELINE
+
+// prepare the job workspace
+def prepWS(project, reports){
+	echoBoldGreen("Preparing Job Workspace")
+	// clean the job workspace
+	deleteDir()
+	// ensure the reports folder exists
+	bat "mkdir ${reports}"
+	// copy _ss_environment config file into project folder
+	configFileProvider([configFile(fileId: '_ss_environment.php', variable: 'ENV')]) {
+		bat "copy /y ${ENV} ${project}\\_ss_environment.php"
+	}
+}
+
+// checkout source from SCM
+def checkoutSCM(project, branch){
+	echoBoldGreen("PULLING source code from git")
+	// move into project folder
+	dir("${project}"){
+		git branch: "${branch}", url: 'https://github.com/patevs/ss_app.git'
+	}
+}
+
+// install composer dependencies
+def installDependencies(project){
+	echoGreen("INSTALLING composer dependencies")
+	// move into project folder
+	dir("${project}"){
+		bat 'composer install --prefer-source'
+	}
+}
+
+// define colors
+//def RED   = "\033[0;31m"
+//def GREEN = "\033[0;32m"
+//def BLUE  = "\e[34m"
+//def CYAN  = "\e[36m"
  
+// output red 
+def echoRed(text){
+	ansiColor('xterm') {
+		echo "\033[0;31m${text}\033[0m"
+	}
+}
+def echoBoldRed(text){
+	ansiColor('xterm') {
+		echo "\033[1;31m${text}\033[1m"
+	}
+}
+
 // output green 
 def echoGreen(text){
 	ansiColor('xterm') {
 		echo "\033[32m${text}\033[0m"
+	}
+}
+def echoBoldGreen(text){
+	ansiColor('xterm') {
+		echo "\033[1;32m${text}\033[1m"
+	}
+}
+
+// output blue
+def echoBlue(text){
+	ansiColor('xterm') {
+		echo "\033[34m${text}\033[0m"
+	}
+}
+def echoBoldBlue(text){
+	ansiColor('xterm') {
+		echo "\033[1;34m${text}\033[1m"
 	}
 }
 
